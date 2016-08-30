@@ -163,7 +163,7 @@ You can now customize your cluster by editing asset files. Any changes to these 
 
 ### Kubernetes Container Runtime
 
-The kube-aws tool now optionally supports using rkt as the kubernetes container runtime. To configure rkt as the container runtime you must run with a CoreOS version >= `v1122.0.0` and configure the runtime flag.
+The kube-aws tool now optionally supports using rkt as the kubernetes container runtime. To configure rkt as the container runtime you must run with a CoreOS version >= `v1151.0.0` and configure the runtime flag.
 
 Edit the `cluster.yaml` file:
 
@@ -197,6 +197,21 @@ hostedZone: staging.example.com
 ```
 
 If `createRecordSet` is not set to true, the deployer will be responsible for making externalDNSName routable to the controller IP after the cluster is created.
+
+### Multi-AZ Clusters
+
+Kube-aws supports "spreading" a cluster across any number of Availability Zones in a given region.
+
+```yaml
+ subnets:
+   - availabilityZone: us-west-1a
+     instanceCIDR: "10.0.0.0/24"
+   - availabilityZone: us-west-1b
+     instanceCIDR: "10.0.1.0/24"
+```
+__A word of caution about EBS and Persistent Volumes__: Any pods deployed to a Multi-AZ cluster must mount EBS volumes via [Persistent Volume Claims](http://kubernetes.io/docs/user-guide/persistent-volumes/#persistentvolumeclaims). Specifying the ID of the EBS volume directly in the pod spec will not work consistently if nodes are spread across multiple zones.
+
+Read more about Kubernetes Multi-AZ cluster support [here](http://kubernetes.io/docs/admin/multiple-zones/).
 
 ### Certificates and Keys
 
