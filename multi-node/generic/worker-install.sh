@@ -20,7 +20,7 @@ export HYPERKUBE_IMAGE_REPO=quay.io/coreos/hyperkube
 export DNS_SERVICE_IP=10.3.0.10
 
 # Whether to use Calico for Kubernetes network policy.
-export USE_CALICO=false
+export USE_CALICO=true
 
 # Determines the container runtime for kubernetes to use. Accepts 'docker' or 'rkt'.
 export CONTAINER_RUNTIME=docker
