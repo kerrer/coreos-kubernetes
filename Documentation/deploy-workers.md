@@ -80,16 +80,26 @@ Create `/etc/systemd/system/kubelet.service` and substitute the following variab
 * Replace `${MASTER_HOST}`
 * Replace `${ADVERTISE_IP}` with this node's publicly routable IP.
 * Replace `${DNS_SERVICE_IP}`
-* Replace `${K8S_VER}` This will map to: `quay.io/coreos/hyperkube:${K8S_VER}` release, e.g. `v1.3.5_coreos.1`.
+* Replace `${K8S_VER}` This will map to: `quay.io/coreos/hyperkube:${K8S_VER}` release, e.g. `v1.3.6_coreos.0`.
 * Replace `${NETWORK_PLUGIN}` with `cni` if using Calico. Otherwise just leave it blank.
+* Decide if you will use [additional features][rkt-opts-examples] such as:
+  - [mounting ephemeral disks][mount-disks]
+  - [allow pods to mount RDB][rdb] or [iSCSI volumes][iscsi]
+  - [allowing access to insecure container registries][insecure-registry]
+  - [use host DNS configuration instead of a public DNS server][host-dns]
+  - [changing your CoreOS auto-update settings][update]
 
 **/etc/systemd/system/kubelet.service**
 
 ```yaml
 [Service]
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
+ExecStartPre=/usr/bin/mkdir -p /var/log/containers
 
 Environment=KUBELET_VERSION=${K8S_VER}
+Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log \
+  --mount volume=var-log,target=/var/log"
+
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --api-servers=https://${MASTER_HOST} \
   --network-plugin-dir=/etc/kubernetes/cni/net.d \
@@ -159,7 +169,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-proxy
-    image: quay.io/coreos/hyperkube:v1.3.5_coreos.1
+    image: quay.io/coreos/hyperkube:v1.3.6_coreos.0
     command:
     - /hyperkube
     - proxy
@@ -299,3 +309,8 @@ To check the health of the calico-node systemd unit that we created, run `system
   <p><strong>Is the kubelet running?</strong></p>
   <a href="configure-kubectl.md" class="btn btn-primary btn-icon-right"  data-category="Docs Next" data-event="Kubernetes: kubectl">Yes, ready to configure `kubectl`</a>
 </div>
+
+[rkt-opts-examples]: kubelet-wrapper.md#customizing-rkt-options
+[rdb]: kubelet-wrapper.md#allow-pods-to-use-rbd-volumes
+[iscsi]: kubelet-wrapper.md#allow-pods-to-use-iscsi-mounts
+[host-dns]: kubelet-wrapper.md#use-the-hosts-dns-configuration

@@ -97,17 +97,26 @@ Note that the kubelet running on a master node may log repeated attempts to post
 
 * Replace `${ADVERTISE_IP}` with this node's publicly routable IP.
 * Replace `${DNS_SERVICE_IP}`
-* Replace `${K8S_VER}` This will map to: `quay.io/coreos/hyperkube:${K8S_VER}` release, e.g. `v1.3.5_coreos.1`.
+* Replace `${K8S_VER}` This will map to: `quay.io/coreos/hyperkube:${K8S_VER}` release, e.g. `v1.3.6_coreos.0`.
 * Replace `${NETWORK_PLUGIN}` with `cni` if using Calico. Otherwise just leave it blank.
-* Decide if you will use [additional features][rkt-opts-examples] such as cluster logging, iSCSI volumes, or addressing workers by hostname in addition to IPs.
+* Decide if you will use [additional features][rkt-opts-examples] such as:
+  - [mounting ephemeral disks][mount-disks]
+  - [allow pods to mount RDB][rdb] or [iSCSI volumes][iscsi]
+  - [allowing access to insecure container registries][insecure-registry]
+  - [use host DNS configuration instead of a public DNS server][host-dns]
+  - [changing your CoreOS auto-update settings][update]
 
 **/etc/systemd/system/kubelet.service**
 
 ```yaml
 [Service]
 ExecStartPre=/usr/bin/mkdir -p /etc/kubernetes/manifests
+ExecStartPre=/usr/bin/mkdir -p /var/log/containers
 
 Environment=KUBELET_VERSION=${K8S_VER}
+Environment="RKT_OPTS=--volume var-log,kind=host,source=/var/log \
+  --mount volume=var-log,target=/var/log"
+
 ExecStart=/usr/lib/coreos/kubelet-wrapper \
   --api-servers=http://127.0.0.1:8080 \
   --network-plugin-dir=/etc/kubernetes/cni/net.d \
@@ -123,8 +132,6 @@ RestartSec=10
 [Install]
 WantedBy=multi-user.target
 ```
-
-[rkt-opts-examples]: kubelet-wrapper.md#customizing-rkt-options
 
 ### Set Up the kube-apiserver Pod
 
@@ -150,7 +157,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-apiserver
-    image: quay.io/coreos/hyperkube:v1.3.5_coreos.1
+    image: quay.io/coreos/hyperkube:v1.3.6_coreos.0
     command:
     - /hyperkube
     - apiserver
@@ -209,7 +216,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-proxy
-    image: quay.io/coreos/hyperkube:v1.3.5_coreos.1
+    image: quay.io/coreos/hyperkube:v1.3.6_coreos.0
     command:
     - /hyperkube
     - proxy
@@ -249,7 +256,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-controller-manager
-    image: quay.io/coreos/hyperkube:v1.3.5_coreos.1
+    image: quay.io/coreos/hyperkube:v1.3.6_coreos.0
     command:
     - /hyperkube
     - controller-manager
@@ -298,7 +305,7 @@ spec:
   hostNetwork: true
   containers:
   - name: kube-scheduler
-    image: quay.io/coreos/hyperkube:v1.3.5_coreos.1
+    image: quay.io/coreos/hyperkube:v1.3.6_coreos.0
     command:
     - /hyperkube
     - scheduler
@@ -541,3 +548,8 @@ kube-proxy-$node
   <p><strong>Did the containers start downloading?</strong> As long as the kubelet knows about them, everything is working properly.</p>
   <a href="deploy-workers.md" class="btn btn-primary btn-icon-right" data-category="Docs Next" data-event="Kubernetes: Workers">Yes, ready to deploy the Workers</a>
 </div>
+
+[rkt-opts-examples]: kubelet-wrapper.md#customizing-rkt-options
+[rdb]: kubelet-wrapper.md#allow-pods-to-use-rbd-volumes
+[iscsi]: kubelet-wrapper.md#allow-pods-to-use-iscsi-mounts
+[host-dns]: kubelet-wrapper.md#use-the-hosts-dns-configuration
