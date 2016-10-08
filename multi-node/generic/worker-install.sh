@@ -25,6 +25,7 @@ export USE_CALICO=true
 # Determines the container runtime for kubernetes to use. Accepts 'docker' or 'rkt'.
 export CONTAINER_RUNTIME=docker
 
+export USE_HUB_MAX_COM=true
 # The above settings can optionally be overridden using an environment file:
 ENV_FILE=/run/coreos-kubernetes/options.env
 
@@ -343,6 +344,16 @@ EOF
         "isDefaultGateway": true
     }
 }
+EOF
+    fi
+    
+    local TEMPLATE=/etc/systemd/system/docker.service.d/50-insecure-registry.conf
+    if [ "${USE_HUB_MAX_COM}" = "true" ] && [ ! -f "${TEMPLATE}" ]; then
+        echo "TEMPLATE: $TEMPLATE"
+        mkdir -p $(dirname $TEMPLATE)
+        cat << EOF > $TEMPLATE
+        [Service]
+        Environment=DOCKER_OPTS='--registry-mirror=https://hub.max.com:5000 --insecure-registry="172.17.0.0/24"'
 EOF
     fi
 

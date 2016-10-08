@@ -1,5 +1,10 @@
 #cloud-config
-
+write_files:
+  - path: /etc/systemd/system/docker.service.d/50-insecure-registry.conf
+    content: |
+        [Service]
+        Environment=DOCKER_OPTS='--registry-mirror=https://hub.max.com:5000 --insecure-registry=hub.max.com:5000'
+        
 coreos:
   update:
     reboot-strategy: "off"

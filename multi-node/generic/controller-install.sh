@@ -830,6 +830,16 @@ EOF
 }
 EOF
     fi
+    
+    local TEMPLATE=/etc/systemd/system/docker.service.d/50-insecure-registry.conf
+    if [ "${USE_HUB_MAX_COM}" = "true" ] && [ ! -f "${TEMPLATE}" ]; then
+        echo "TEMPLATE: $TEMPLATE"
+        mkdir -p $(dirname $TEMPLATE)
+        cat << EOF > $TEMPLATE
+        [Service]
+        Environment=DOCKER_OPTS='--registry-mirror=https://hub.max.com:5000 --insecure-registry="172.17.0.0/24"'
+EOF
+    fi
 }
 
 function start_addons {
